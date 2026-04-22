@@ -1,0 +1,735 @@
+{
+  "info": {
+    "_postman_id": "billapp-local-testing-2024",
+    "name": "BillApp API - Local Testing",
+    "description": "Complete API collection for BillApp (Spring Boot + JWT). Base URL: http://localhost:8080\n\n## Quick Start\n1. Import this collection into Postman\n2. Import the BillApp Environment\n3. Run **Auth / Login** first — JWT token auto-saves\n4. All other requests use the saved token automatically\n\n## Default Credentials\n- Username: admin\n- Password: admin123",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl",  "value": "http://localhost:8080", "type": "string" },
+    { "key": "token",    "value": "", "type": "string" },
+    { "key": "billId",   "value": "1", "type": "string" },
+    { "key": "userId",   "value": "1", "type": "string" }
+  ],
+  "item": [
+
+    {
+      "name": "🔐 Auth",
+      "item": [
+
+        {
+          "name": "Login (admin)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.token) {",
+                "    pm.collectionVariables.set('token', json.token);",
+                "    pm.environment.set('token', json.token);",
+                "    console.log('✅ Token saved:', json.token.substring(0,30) + '...');",
+                "}",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Has token', () => pm.expect(json.token).to.be.a('string'));",
+                "pm.test('Role is ADMIN', () => pm.expect(json.role).to.equal('ADMIN'));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+
+        {
+          "name": "Login (john_doe)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john_doe\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+
+        {
+          "name": "Login (wrong password) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 401 on bad credentials', () => pm.response.to.have.status(401));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+
+        {
+          "name": "Register (new user)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Has token', () => pm.expect(json.token).to.be.a('string'));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"testuser\",\n  \"email\": \"testuser@billapp.com\",\n  \"password\": \"test1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+          }
+        },
+
+        {
+          "name": "Register (duplicate username) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 on duplicate', () => pm.response.to.have.status(400));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"email\": \"another@billapp.com\",\n  \"password\": \"test1234\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/auth/register", "host": ["{{baseUrl}}"], "path": ["api","auth","register"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "📊 Dashboard",
+      "item": [
+
+        {
+          "name": "Get Dashboard Stats",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Has totalBills', () => pm.expect(json.totalBills).to.be.a('number'));",
+                "pm.test('Has paidBills',  () => pm.expect(json.paidBills).to.be.a('number'));",
+                "pm.test('Has totalRevenue', () => pm.expect(json).to.have.property('totalRevenue'));",
+                "pm.test('Has recentBills array', () => pm.expect(json.recentBills).to.be.an('array'));",
+                "console.log('📊 Stats:', JSON.stringify({",
+                "  total: json.totalBills, paid: json.paidBills,",
+                "  pending: json.pendingBills, revenue: json.totalRevenue",
+                "}, null, 2));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/dashboard", "host": ["{{baseUrl}}"], "path": ["api","bills","dashboard"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🧾 Bills - Read",
+      "item": [
+
+        {
+          "name": "Get All Bills",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Response is array', () => pm.expect(json).to.be.an('array'));",
+                "if (json.length > 0) {",
+                "    pm.collectionVariables.set('billId', json[0].id);",
+                "    console.log('💾 First bill ID saved:', json[0].id, '| Number:', json[0].billNumber);",
+                "}",
+                "pm.test('Bills have required fields', () => {",
+                "    if (json.length > 0) {",
+                "        pm.expect(json[0]).to.have.all.keys('id','billNumber','customerName','totalAmount','status');",
+                "    }",
+                "});"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        },
+
+        {
+          "name": "Get Bill by ID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Has billNumber', () => pm.expect(json.billNumber).to.be.a('string'));",
+                "pm.test('Has items array', () => pm.expect(json.items).to.be.an('array'));",
+                "pm.test('Items not empty', () => pm.expect(json.items.length).to.be.above(0));",
+                "console.log('📄 Bill:', json.billNumber, '| Customer:', json.customerName, '| Total: Rs.', json.totalAmount);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}"] }
+          }
+        },
+
+        {
+          "name": "Get Bill by ID (not found) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 for missing bill', () => pm.response.to.have.status(400));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/99999", "host": ["{{baseUrl}}"], "path": ["api","bills","99999"] }
+          }
+        },
+
+        {
+          "name": "Get Bill (no auth) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 401 without token', () => pm.response.to.have.status(401));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "✏️ Bills - Create",
+      "item": [
+
+        {
+          "name": "Create Bill (DRAFT)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 201 Created', () => pm.response.to.have.status(201));",
+                "pm.test('Bill number assigned', () => pm.expect(json.billNumber).to.match(/^BILL\\d{4}$/));",
+                "pm.test('Status is DRAFT', () => pm.expect(json.status).to.equal('DRAFT'));",
+                "pm.test('Total calculated', () => pm.expect(parseFloat(json.totalAmount)).to.be.above(0));",
+                "pm.collectionVariables.set('billId', json.id);",
+                "console.log('✅ Created:', json.billNumber, '| Total: Rs.', json.totalAmount, '| ID:', json.id);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Accenture India Pvt Ltd\",\n  \"customerEmail\": \"ap@accenture.com\",\n  \"customerPhone\": \"+91-80-6764-0000\",\n  \"customerAddress\": \"Divyasree Techno Park, Whitefield, Bengaluru, KA 560066\",\n  \"billDate\": \"2025-01-15\",\n  \"dueDate\": \"2025-02-15\",\n  \"taxRate\": 18,\n  \"discount\": 5000,\n  \"status\": \"DRAFT\",\n  \"notes\": \"Digital transformation consulting - Phase 1. Net 30 payment terms.\",\n  \"companyName\": \"BillApp Solutions Pvt Ltd\",\n  \"companyAddress\": \"42, MG Road, Bengaluru, KA 560001\",\n  \"companyPhone\": \"+91-80-4567-8901\",\n  \"companyEmail\": \"billing@billapp.in\",\n  \"items\": [\n    {\n      \"description\": \"Cloud Architecture Design\",\n      \"quantity\": 80,\n      \"unitPrice\": 1200,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"Microservices Implementation\",\n      \"quantity\": 120,\n      \"unitPrice\": 1000,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"Technical Documentation & Handover\",\n      \"quantity\": 1,\n      \"unitPrice\": 15000,\n      \"unit\": \"fixed\"\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        },
+
+        {
+          "name": "Create Bill (PENDING - simple)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 201', () => pm.response.to.have.status(201));",
+                "pm.test('Status is PENDING', () => pm.expect(json.status).to.equal('PENDING'));",
+                "console.log('✅ Created pending bill:', json.billNumber);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Swiggy Pvt Ltd\",\n  \"customerEmail\": \"finance@swiggy.in\",\n  \"customerPhone\": \"+91-80-4722-5555\",\n  \"customerAddress\": \"Embassy Tech Village, Bengaluru, KA 560103\",\n  \"billDate\": \"2025-01-20\",\n  \"dueDate\": \"2025-02-20\",\n  \"taxRate\": 18,\n  \"discount\": 0,\n  \"status\": \"PENDING\",\n  \"notes\": \"Mobile app backend API development.\",\n  \"companyName\": \"BillApp Solutions Pvt Ltd\",\n  \"companyAddress\": \"42, MG Road, Bengaluru, KA 560001\",\n  \"companyPhone\": \"+91-80-4567-8901\",\n  \"companyEmail\": \"billing@billapp.in\",\n  \"items\": [\n    {\n      \"description\": \"REST API Development\",\n      \"quantity\": 60,\n      \"unitPrice\": 900,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"API Testing & QA\",\n      \"quantity\": 20,\n      \"unitPrice\": 600,\n      \"unit\": \"hrs\"\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        },
+
+        {
+          "name": "Create Bill (missing customerName) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 on validation error', () => pm.response.to.have.status(400));",
+                "console.log('Validation error:', JSON.stringify(pm.response.json()));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerEmail\": \"test@test.com\",\n  \"billDate\": \"2025-01-15\",\n  \"taxRate\": 18,\n  \"discount\": 0,\n  \"items\": [\n    { \"description\": \"Service\", \"quantity\": 1, \"unitPrice\": 5000 }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        },
+
+        {
+          "name": "Create Bill (no items) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 for empty items', () => pm.response.to.have.status(400));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Test Corp\",\n  \"billDate\": \"2025-01-15\",\n  \"taxRate\": 18,\n  \"discount\": 0,\n  \"items\": []\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🔄 Bills - Update",
+      "item": [
+
+        {
+          "name": "Update Bill (full)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Customer updated', () => pm.expect(json.customerName).to.equal('Accenture India Pvt Ltd - Updated'));",
+                "pm.test('Total recalculated', () => pm.expect(parseFloat(json.totalAmount)).to.be.above(0));",
+                "console.log('✅ Updated bill:', json.billNumber, '| New total: Rs.', json.totalAmount);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Accenture India Pvt Ltd - Updated\",\n  \"customerEmail\": \"updated.ap@accenture.com\",\n  \"customerPhone\": \"+91-80-6764-1111\",\n  \"customerAddress\": \"Divyasree Techno Park, Whitefield, Bengaluru, KA 560066\",\n  \"billDate\": \"2025-01-15\",\n  \"dueDate\": \"2025-03-01\",\n  \"taxRate\": 18,\n  \"discount\": 10000,\n  \"status\": \"PENDING\",\n  \"notes\": \"Updated: Extended scope includes DevOps setup.\",\n  \"companyName\": \"BillApp Solutions Pvt Ltd\",\n  \"companyAddress\": \"42, MG Road, Bengaluru, KA 560001\",\n  \"companyPhone\": \"+91-80-4567-8901\",\n  \"companyEmail\": \"billing@billapp.in\",\n  \"items\": [\n    {\n      \"description\": \"Cloud Architecture Design\",\n      \"quantity\": 80,\n      \"unitPrice\": 1200,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"Microservices Implementation\",\n      \"quantity\": 120,\n      \"unitPrice\": 1000,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"DevOps & CI/CD Pipeline Setup\",\n      \"quantity\": 40,\n      \"unitPrice\": 800,\n      \"unit\": \"hrs\"\n    },\n    {\n      \"description\": \"Technical Documentation\",\n      \"quantity\": 1,\n      \"unitPrice\": 15000,\n      \"unit\": \"fixed\"\n    }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}"] }
+          }
+        },
+
+        {
+          "name": "Update Bill Status → PAID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Status is PAID', () => pm.expect(json.status).to.equal('PAID'));",
+                "console.log('✅ Bill', json.billNumber, 'marked as PAID');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{billId}}/status?status=PAID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bills","{{billId}}","status"],
+              "query": [{ "key": "status", "value": "PAID" }]
+            }
+          }
+        },
+
+        {
+          "name": "Update Bill Status → PENDING",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Status is PENDING', () => pm.response.json().status === 'PENDING');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{billId}}/status?status=PENDING",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bills","{{billId}}","status"],
+              "query": [{ "key": "status", "value": "PENDING" }]
+            }
+          }
+        },
+
+        {
+          "name": "Update Bill Status → CANCELLED",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Status is CANCELLED', () => pm.response.json().status === 'CANCELLED');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{billId}}/status?status=CANCELLED",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bills","{{billId}}","status"],
+              "query": [{ "key": "status", "value": "CANCELLED" }]
+            }
+          }
+        },
+
+        {
+          "name": "Update Bill Status → DRAFT",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{billId}}/status?status=DRAFT",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bills","{{billId}}","status"],
+              "query": [{ "key": "status", "value": "DRAFT" }]
+            }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "📥 Bills - PDF Download",
+      "item": [
+
+        {
+          "name": "Download Bill PDF",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Content-Type is PDF', () => {",
+                "    pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                "});",
+                "pm.test('Content-Disposition is attachment', () => {",
+                "    var cd = pm.response.headers.get('Content-Disposition');",
+                "    pm.expect(cd).to.include('attachment');",
+                "});",
+                "console.log('📄 PDF downloaded. Content-Length:', pm.response.headers.get('Content-Length'), 'bytes');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}/pdf", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}","pdf"] }
+          }
+        },
+
+        {
+          "name": "Download PDF (BILL0001)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                "pm.test('Is PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('pdf'));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/1/pdf", "host": ["{{baseUrl}}"], "path": ["api","bills","1","pdf"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🗑️ Bills - Delete",
+      "item": [
+
+        {
+          "name": "Delete Bill (by billId var)",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 204 No Content', () => pm.response.to.have.status(204));",
+                "console.log('🗑️ Bill deleted successfully');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}"] }
+          }
+        },
+
+        {
+          "name": "Delete Bill (not found) ❌",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status 400 for missing bill', () => pm.response.to.have.status(400));"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/99999", "host": ["{{baseUrl}}"], "path": ["api","bills","99999"] }
+          }
+        }
+
+      ]
+    },
+
+    {
+      "name": "🧪 End-to-End Flow",
+      "item": [
+
+        {
+          "name": "Step 1 - Login",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.collectionVariables.set('token', json.token);",
+                "pm.test('Login OK', () => pm.response.to.have.status(200));",
+                "console.log('Step 1/5: Logged in as', json.username);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"username\":\"admin\",\"password\":\"admin123\"}" },
+            "url": { "raw": "{{baseUrl}}/api/auth/login", "host": ["{{baseUrl}}"], "path": ["api","auth","login"] }
+          }
+        },
+
+        {
+          "name": "Step 2 - Create Bill",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.collectionVariables.set('billId', json.id);",
+                "pm.test('Bill created', () => pm.response.to.have.status(201));",
+                "console.log('Step 2/5: Created', json.billNumber, '| ID:', json.id);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type",   "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"E2E Test Customer\",\n  \"customerEmail\": \"e2e@test.com\",\n  \"billDate\": \"2025-01-22\",\n  \"dueDate\": \"2025-02-22\",\n  \"taxRate\": 18,\n  \"discount\": 500,\n  \"status\": \"DRAFT\",\n  \"notes\": \"End-to-end test bill\",\n  \"companyName\": \"BillApp Solutions Pvt Ltd\",\n  \"companyEmail\": \"billing@billapp.in\",\n  \"items\": [\n    { \"description\": \"Consulting Service\", \"quantity\": 10, \"unitPrice\": 1000, \"unit\": \"hrs\" },\n    { \"description\": \"Software License\",  \"quantity\": 1,  \"unitPrice\": 5000, \"unit\": \"license\" }\n  ]\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/api/bills", "host": ["{{baseUrl}}"], "path": ["api","bills"] }
+          }
+        },
+
+        {
+          "name": "Step 3 - Read Bill",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "var json = pm.response.json();",
+                "pm.test('Bill retrieved', () => pm.response.to.have.status(200));",
+                "pm.test('Correct customer', () => pm.expect(json.customerName).to.equal('E2E Test Customer'));",
+                "console.log('Step 3/5: Retrieved', json.billNumber, '| Total: Rs.', json.totalAmount);"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}"] }
+          }
+        },
+
+        {
+          "name": "Step 4 - Mark as PAID",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('Status updated', () => pm.response.to.have.status(200));",
+                "pm.test('Is PAID', () => pm.expect(pm.response.json().status).to.equal('PAID'));",
+                "console.log('Step 4/5: Bill marked PAID');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/bills/{{billId}}/status?status=PAID",
+              "host": ["{{baseUrl}}"],
+              "path": ["api","bills","{{billId}}","status"],
+              "query": [{ "key": "status", "value": "PAID" }]
+            }
+          }
+        },
+
+        {
+          "name": "Step 5 - Download PDF",
+          "event": [{
+            "listen": "test",
+            "script": {
+              "exec": [
+                "pm.test('PDF generated', () => pm.response.to.have.status(200));",
+                "pm.test('Is PDF', () => pm.expect(pm.response.headers.get('Content-Type')).to.include('pdf'));",
+                "console.log('Step 5/5: PDF downloaded. ✅ E2E flow complete!');"
+              ],
+              "type": "text/javascript"
+            }
+          }],
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/api/bills/{{billId}}/pdf", "host": ["{{baseUrl}}"], "path": ["api","bills","{{billId}}","pdf"] }
+          }
+        }
+
+      ]
+    }
+
+  ]
+}
