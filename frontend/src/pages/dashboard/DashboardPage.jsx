@@ -41,9 +41,17 @@ const statusConfig = {
   CANCELLED: { color: 'error',   label: 'Cancelled' },
 };
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -63,16 +71,18 @@ export default function DashboardPage() {
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Box>
           <Typography variant="h4" fontWeight={800}>
-            Good morning, {user?.username} 👋
+            {getGreeting()}, {user?.username} 👋
           </Typography>
           <Typography variant="body1" color="text.secondary" mt={0.5}>
             Here's what's happening with your invoices today
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/bills/create')}
-          sx={{ display: { xs: 'none', sm: 'flex' } }}>
-          New Invoice
-        </Button>
+        {isAdmin && (
+          <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/bills/create')}
+            sx={{ display: { xs: 'none', sm: 'flex' } }}>
+            New Invoice
+          </Button>
+        )}
       </Box>
 
       {/* Stats */}
@@ -160,10 +170,12 @@ export default function DashboardPage() {
                           <Chip label={sc.label} color={sc.color} size="small" />
                         </TableCell>
                         <TableCell align="right">
-                          <Button size="small" startIcon={<Edit />}
-                            onClick={(e) => { e.stopPropagation(); navigate(`/bills/${bill.id}/edit`); }}>
-                            Edit
-                          </Button>
+                          {isAdmin && (
+                            <Button size="small" startIcon={<Edit />}
+                              onClick={(e) => { e.stopPropagation(); navigate(`/bills/${bill.id}/edit`); }}>
+                              Edit
+                            </Button>
+                          )}
                         </TableCell>
                       </TableRow>
                     );
