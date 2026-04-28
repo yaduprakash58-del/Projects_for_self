@@ -12,6 +12,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { billAPI } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 
 const statusConfig = {
@@ -23,6 +24,8 @@ const statusConfig = {
 
 export default function BillsListPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [bills, setBills] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -97,9 +100,11 @@ export default function BillsListPage() {
             {filtered.length} of {bills.length} bills
           </Typography>
         </Box>
-        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/bills/create')}>
-          New Invoice
-        </Button>
+        {isAdmin && (
+          <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/bills/create')}>
+            New Invoice
+          </Button>
+        )}
       </Box>
 
       {/* Filters */}
@@ -152,8 +157,10 @@ export default function BillsListPage() {
                 <TableRow>
                   <TableCell colSpan={7} align="center" sx={{ py: 6 }}>
                     <Typography color="text.secondary">No bills found</Typography>
-                    <Button variant="contained" startIcon={<Add />} sx={{ mt: 2 }}
-                      onClick={() => navigate('/bills/create')}>Create First Bill</Button>
+                    {isAdmin && (
+                      <Button variant="contained" startIcon={<Add />} sx={{ mt: 2 }}
+                        onClick={() => navigate('/bills/create')}>Create First Bill</Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ) : filtered.map((bill) => {
@@ -203,11 +210,13 @@ export default function BillsListPage() {
                             <Visibility fontSize="small" />
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Edit">
-                          <IconButton size="small" color="primary" onClick={() => navigate(`/bills/${bill.id}/edit`)}>
-                            <Edit fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {isAdmin && (
+                          <Tooltip title="Edit">
+                            <IconButton size="small" color="primary" onClick={() => navigate(`/bills/${bill.id}/edit`)}>
+                              <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                         <Tooltip title="Download PDF">
                           <IconButton size="small" color="success"
                             onClick={() => handleDownload(bill)}
@@ -215,11 +224,13 @@ export default function BillsListPage() {
                             {downloading === bill.id ? <CircularProgress size={16} /> : <Download fontSize="small" />}
                           </IconButton>
                         </Tooltip>
-                        <Tooltip title="Delete">
-                          <IconButton size="small" color="error" onClick={() => setDeleteId(bill.id)}>
-                            <Delete fontSize="small" />
-                          </IconButton>
-                        </Tooltip>
+                        {isAdmin && (
+                          <Tooltip title="Delete">
+                            <IconButton size="small" color="error" onClick={() => setDeleteId(bill.id)}>
+                              <Delete fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>

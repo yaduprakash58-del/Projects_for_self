@@ -100,6 +100,32 @@ public class Dtos {
         private LocalDateTime updatedAt;
     }
 
+    // ===== USER DTOs =====
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UserResponse {
+        private Long id;
+        private String username;
+        private String email;
+        private String role;
+        private LocalDateTime createdAt;
+    }
+
+    @Data
+    public static class CreateUserRequest {
+        @NotBlank private String username;
+        @NotBlank @Email private String email;
+        @NotBlank @Size(min = 6) private String password;
+        private String role;
+    }
+
+    @Data
+    public static class UpdateRoleRequest {
+        @NotBlank private String role;
+    }
+
     @Data
     @Builder
     @NoArgsConstructor

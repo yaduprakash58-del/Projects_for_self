@@ -7,6 +7,7 @@ import com.billapp.service.PdfService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,23 +29,27 @@ public class BillController {
         return ResponseEntity.ok(billService.getBillById(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<BillResponse> createBill(@Valid @RequestBody CreateBillRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(billService.createBill(request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<BillResponse> updateBill(@PathVariable Long id,
                                                     @Valid @RequestBody CreateBillRequest request) {
         return ResponseEntity.ok(billService.updateBill(id, request));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/{id}/status")
     public ResponseEntity<BillResponse> updateStatus(@PathVariable Long id,
                                                       @RequestParam Bill.BillStatus status) {
         return ResponseEntity.ok(billService.updateStatus(id, status));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBill(@PathVariable Long id) {
         billService.deleteBill(id);

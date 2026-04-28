@@ -6,17 +6,21 @@ import {
 } from '@mui/material';
 import {
   Dashboard, ReceiptLong, AddCircleOutline, Menu as MenuIcon,
-  Logout, Person, ChevronLeft
+  Logout, Person, ChevronLeft, PeopleAlt
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const DRAWER_WIDTH = 240;
 
-const navItems = [
+const baseNavItems = [
   { label: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
   { label: 'All Bills', icon: <ReceiptLong />, path: '/bills' },
+];
+
+const adminNavItems = [
   { label: 'Create Bill', icon: <AddCircleOutline />, path: '/bills/create' },
+  { label: 'Manage Users', icon: <PeopleAlt />, path: '/users' },
 ];
 
 export default function Layout() {
@@ -27,6 +31,8 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+  const navItems = isAdmin ? [...baseNavItems, ...adminNavItems] : baseNavItems;
 
   const handleLogout = () => {
     logout();

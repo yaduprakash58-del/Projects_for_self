@@ -8,6 +8,7 @@ import { Edit, Download, ArrowBack, Business, Person } from '@mui/icons-material
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { billAPI } from '../../api';
+import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 
 const statusConfig = {
@@ -27,6 +28,8 @@ const InfoRow = ({ label, value }) => (
 export default function BillDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
@@ -83,10 +86,12 @@ export default function BillDetailPage() {
             onClick={handleDownload} disabled={downloading}>
             Download PDF
           </Button>
-          <Button variant="contained" startIcon={<Edit />}
-            onClick={() => navigate(`/bills/${id}/edit`)}>
-            Edit Bill
-          </Button>
+          {isAdmin && (
+            <Button variant="contained" startIcon={<Edit />}
+              onClick={() => navigate(`/bills/${id}/edit`)}>
+              Edit Bill
+            </Button>
+          )}
         </Box>
       </Box>
 
