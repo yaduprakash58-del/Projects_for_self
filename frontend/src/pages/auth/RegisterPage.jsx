@@ -7,11 +7,9 @@ import { ReceiptLong } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { authAPI } from '../../api/index.jsx';
-import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
 
@@ -21,10 +19,9 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await authAPI.register(form);
-      login({ username: res.data.username, email: res.data.email, role: res.data.role }, res.data.token);
-      toast.success('Account created successfully!');
-      navigate('/dashboard');
+      await authAPI.register(form);
+      toast.success('Account created! Please sign in.');
+      navigate('/login');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
     } finally {

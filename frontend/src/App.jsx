@@ -22,7 +22,7 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<AdminRoute><RegisterPage /></AdminRoute>} />
+            <Route path="/register" element={<RegisterPage />} />
             <Route path="/" element={
               <PrivateRoute><Layout /></PrivateRoute>
             }>

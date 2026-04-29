@@ -33,7 +33,7 @@ public class SecurityConfig {
     @Autowired private UserDetailsServiceImpl userDetailsService;
 
     @Value("${app.cors.allowed-origins}")
-    private String allowedOrigins;
+    private String[] allowedOrigins;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
