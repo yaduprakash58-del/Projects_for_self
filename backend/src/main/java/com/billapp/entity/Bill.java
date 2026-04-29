@@ -56,7 +56,7 @@ public class Bill {
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(50)")
     private BillStatus status;
 
     @Column(name = "notes", columnDefinition = "TEXT")
