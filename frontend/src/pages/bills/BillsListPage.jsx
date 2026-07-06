@@ -7,7 +7,7 @@ import {
   CircularProgress
 } from '@mui/material';
 import {
-  Add, Search, Edit, Delete, Download, Visibility, FilterList
+  Add, Search, Edit, Delete, Download, Visibility, FilterList, ContentCopy
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -214,6 +214,13 @@ export default function BillsListPage() {
                           <Tooltip title="Edit">
                             <IconButton size="small" color="primary" onClick={() => navigate(`/bills/${bill.id}/edit`)}>
                               <Edit fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {isAdmin && (
+                          <Tooltip title="Clone">
+                            <IconButton size="small" color="secondary" onClick={() => navigate(`/bills/${bill.id}/clone`)}>
+                              <ContentCopy fontSize="small" />
                             </IconButton>
                           </Tooltip>
                         )}

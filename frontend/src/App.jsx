@@ -32,6 +32,7 @@ export default function App() {
               <Route path="bills/create" element={<AdminRoute><BillFormPage /></AdminRoute>} />
               <Route path="bills/:id" element={<BillDetailPage />} />
               <Route path="bills/:id/edit" element={<AdminRoute><BillFormPage /></AdminRoute>} />
+              <Route path="bills/:id/clone" element={<AdminRoute><BillFormPage /></AdminRoute>} />
               <Route path="users" element={<AdminRoute><UsersPage /></AdminRoute>} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

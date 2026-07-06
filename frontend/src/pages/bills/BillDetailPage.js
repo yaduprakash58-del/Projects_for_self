@@ -4,11 +4,11 @@ import {
   Chip, Table, TableBody, TableCell, TableHead, TableRow,
   CircularProgress, Avatar
 } from '@mui/material';
-import { Edit, Download, ArrowBack, Business, Person } from '@mui/icons-material';
+import { Edit, Download, ArrowBack, Business, Person, ContentCopy } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { billAPI } from '../../api';
-import { useAuth } from '../../context/AuthContext';
+import { billAPI } from '../../api/index.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 import { format } from 'date-fns';
 
 const statusConfig = {
@@ -86,6 +86,12 @@ export default function BillDetailPage() {
             onClick={handleDownload} disabled={downloading}>
             Download PDF
           </Button>
+          {isAdmin && (
+            <Button variant="outlined" color="secondary" startIcon={<ContentCopy />}
+              onClick={() => navigate(`/bills/${id}/clone`)}>
+              Clone
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="contained" startIcon={<Edit />}
               onClick={() => navigate(`/bills/${id}/edit`)}>

@@ -9,7 +9,7 @@ import {
   Add, Delete, Save, Download, ArrowBack, Business, Person,
   Receipt, Notes, AttachMoney
 } from '@mui/icons-material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { billAPI } from '../../api/index.jsx';
 import { format } from 'date-fns';
@@ -32,9 +32,11 @@ const SectionTitle = ({ icon, title }) => (
 export default function BillFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const isEdit = Boolean(id);
+  const { pathname } = useLocation();
+  const isClone = pathname.endsWith('/clone');
+  const isEdit = Boolean(id) && !isClone;
 
-  const [loading, setLoading] = useState(isEdit);
+  const [loading, setLoading] = useState(Boolean(id));
   const [saving, setSaving] = useState(false);
   const [downloading, setDownloading] = useState(false);
 
@@ -73,9 +75,9 @@ export default function BillFormPage() {
     setTotals({ subtotal, taxAmount, discount: discountVal, total: Math.max(0, total) });
   }, [items, form.taxRate, form.discount]);
 
-  // Load existing bill
+  // Load existing bill (for edit) or the source bill (for clone)
   useEffect(() => {
-    if (isEdit) {
+    if (id) {
       billAPI.getById(id).then(res => {
         const b = res.data;
         setForm({
@@ -83,8 +85,9 @@ export default function BillFormPage() {
           customerEmail: b.customerEmail || '',
           customerPhone: b.customerPhone || '',
           customerAddress: b.customerAddress || '',
-          billDate: b.billDate || format(new Date(), 'yyyy-MM-dd'),
-          dueDate: b.dueDate || '',
+          // A clone starts fresh: use today's bill date and clear the due date.
+          billDate: isClone ? format(new Date(), 'yyyy-MM-dd') : (b.billDate || format(new Date(), 'yyyy-MM-dd')),
+          dueDate: isClone ? '' : (b.dueDate || ''),
           taxRate: b.taxRate?.toString() || '0',
           discount: b.discount?.toString() || '0',
           notes: b.notes || '',
@@ -92,7 +95,8 @@ export default function BillFormPage() {
           companyAddress: b.companyAddress || '',
           companyPhone: b.companyPhone || '',
           companyEmail: b.companyEmail || '',
-          status: b.status || 'DRAFT',
+          // A clone always starts as a new DRAFT, never inheriting PAID/CANCELLED.
+          status: isClone ? 'DRAFT' : (b.status || 'DRAFT'),
         });
         if (b.items?.length) {
           setItems(b.items.map(item => ({
@@ -106,7 +110,7 @@ export default function BillFormPage() {
       }).catch(() => toast.error('Failed to load bill'))
         .finally(() => setLoading(false));
     }
-  }, [id, isEdit]);
+  }, [id, isClone]);
 
   const handleFormChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
 
@@ -202,10 +206,12 @@ export default function BillFormPage() {
           </IconButton>
           <Box>
             <Typography variant="h4" fontWeight={800}>
-              {isEdit ? 'Edit Invoice' : 'Create Invoice'}
+              {isEdit ? 'Edit Invoice' : isClone ? 'Clone Invoice' : 'Create Invoice'}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {isEdit ? 'Modify and save your invoice' : 'Fill in the details below'}
+              {isEdit ? 'Modify and save your invoice'
+                : isClone ? 'Review the copied details, then save as a new invoice'
+                : 'Fill in the details below'}
             </Typography>
           </Box>
         </Box>
