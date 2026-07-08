@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           <Typography variant="h6" fontWeight={700} mb={0.5}>Sign In</Typography>
           <Typography variant="body2" color="text.secondary" mb={3}>
-            Default: <strong>admin</strong> / <strong>admin123</strong>
+            Enter your credentials to continue
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit}>

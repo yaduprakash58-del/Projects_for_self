@@ -6,8 +6,8 @@ import {
 import { Visibility, VisibilityOff, ReceiptLong } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { authAPI } from '../../api';
-import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../api/index.jsx';
+import { useAuth } from '../../context/AuthContext.jsx';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -90,7 +90,7 @@ export default function LoginPage() {
 
           <Typography variant="h6" fontWeight={700} mb={0.5}>Sign In</Typography>
           <Typography variant="body2" color="text.secondary" mb={3}>
-            Default: <strong>admin</strong> / <strong>admin123</strong>
+            Enter your credentials to continue
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit}>

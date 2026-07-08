@@ -35,6 +35,12 @@ public class Dtos {
         private String role;
     }
 
+    @Data
+    public static class ChangePasswordRequest {
+        @NotBlank private String currentPassword;
+        @NotBlank @Size(min = 6) private String newPassword;
+    }
+
     // ===== BILL ITEM DTOs =====
     @Data
     @NoArgsConstructor

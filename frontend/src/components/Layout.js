@@ -6,10 +6,11 @@ import {
 } from '@mui/material';
 import {
   Dashboard, ReceiptLong, AddCircleOutline, Menu as MenuIcon,
-  Logout, Person, ChevronLeft, PeopleAlt
+  Logout, Person, ChevronLeft, PeopleAlt, Lock
 } from '@mui/icons-material';
 import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext.jsx';
+import ChangePasswordDialog from './ChangePasswordDialog.jsx';
 
 const DRAWER_WIDTH = 240;
 
@@ -28,6 +29,7 @@ export default function Layout() {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [pwdOpen, setPwdOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -97,6 +99,11 @@ export default function Layout() {
             <Typography variant="body2" color="white" fontWeight={600} noWrap>{user?.username}</Typography>
             <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.5)' }}>{user?.role}</Typography>
           </Box>
+          <Tooltip title="Change password">
+            <IconButton size="small" onClick={() => setPwdOpen(true)} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white' } }}>
+              <Lock fontSize="small" />
+            </IconButton>
+          </Tooltip>
           <Tooltip title="Logout">
             <IconButton size="small" onClick={handleLogout} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white' } }}>
               <Logout fontSize="small" />
@@ -124,6 +131,9 @@ export default function Layout() {
               </Avatar>
             </IconButton>
             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+              <MenuItem onClick={() => { setAnchorEl(null); setPwdOpen(true); }}>
+                <Lock fontSize="small" sx={{ mr: 1 }} />Change Password
+              </MenuItem>
               <MenuItem onClick={handleLogout}><Logout fontSize="small" sx={{ mr: 1 }} />Logout</MenuItem>
             </Menu>
           </Toolbar>
@@ -155,6 +165,8 @@ export default function Layout() {
       }}>
         <Outlet />
       </Box>
+
+      <ChangePasswordDialog open={pwdOpen} onClose={() => setPwdOpen(false)} />
     </Box>
   );
 }
