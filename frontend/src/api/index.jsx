@@ -39,6 +39,8 @@ export const billAPI = {
   updateStatus: (id, status) => api.patch(`/bills/${id}/status?status=${status}`),
   delete: (id) => api.delete(`/bills/${id}`),
   getDashboard: () => api.get('/bills/dashboard'),
+  sendEmail: (id, data) => api.post(`/bills/${id}/send-email`, data || {}),
+  getWhatsAppLink: (id) => api.get(`/bills/${id}/whatsapp-link`),
   downloadPdf: async (id, billNumber) => {
     const response = await api.get(`/bills/${id}/pdf`, { responseType: 'blob' });
     const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));

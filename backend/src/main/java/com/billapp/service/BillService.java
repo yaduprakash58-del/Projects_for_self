@@ -7,20 +7,28 @@ import com.billapp.entity.User;
 import com.billapp.repository.BillRepository;
 import com.billapp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.billapp.dto.Dtos.WhatsAppLinkResponse;
 
 @Service
 public class BillService {
 
     @Autowired private BillRepository billRepository;
     @Autowired private UserRepository userRepository;
+
+    @Value("${app.whatsapp.default-country-code:91}")
+    private String defaultCountryCode;
 
     private String generateBillNumber() {
         Integer max = billRepository.findMaxBillNumber();
@@ -166,6 +174,50 @@ public class BillService {
             .totalRevenue(totalRevenue)
             .recentBills(recent)
             .build();
+    }
+
+    /**
+     * Builds a wa.me click-to-chat link pre-filled with an invoice summary,
+     * addressed to the bill's customer phone number.
+     */
+    public WhatsAppLinkResponse buildWhatsAppLink(Long id) {
+        Bill bill = billRepository.findById(id).orElseThrow(() -> new RuntimeException("Bill not found"));
+
+        if (bill.getCustomerPhone() == null || bill.getCustomerPhone().isBlank()) {
+            throw new RuntimeException("This bill has no customer phone number");
+        }
+
+        String phone = normalizePhone(bill.getCustomerPhone());
+        String company = (bill.getCompanyName() != null && !bill.getCompanyName().isBlank())
+            ? bill.getCompanyName() : "us";
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("Hello ").append(bill.getCustomerName()).append(",\n\n");
+        msg.append("Here is your invoice ").append(bill.getBillNumber())
+           .append(" from ").append(company).append(".\n");
+        msg.append("Amount due: ₹").append(fmtAmount(bill.getTotalAmount())).append("\n");
+        if (bill.getDueDate() != null) {
+            msg.append("Due date: ").append(bill.getDueDate()).append("\n");
+        }
+        msg.append("\nThank you for your business!");
+
+        String encoded = URLEncoder.encode(msg.toString(), StandardCharsets.UTF_8);
+        String link = "https://wa.me/" + phone + "?text=" + encoded;
+
+        return WhatsAppLinkResponse.builder().link(link).phone(phone).build();
+    }
+
+    /** Strips non-digits; prepends the default country code to local (<=10 digit) numbers. */
+    private String normalizePhone(String raw) {
+        String digits = raw.replaceAll("[^0-9]", "");
+        if (digits.length() <= 10) {
+            digits = defaultCountryCode + digits;
+        }
+        return digits;
+    }
+
+    private String fmtAmount(BigDecimal val) {
+        return val == null ? "0.00" : String.format("%,.2f", val);
     }
 
     private BillResponse mapToResponse(Bill bill) {

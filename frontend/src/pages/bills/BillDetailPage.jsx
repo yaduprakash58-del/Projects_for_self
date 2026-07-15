@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, Grid, Divider,
   Chip, Table, TableBody, TableCell, TableHead, TableRow,
-  CircularProgress, Avatar
+  CircularProgress, Avatar, Dialog, DialogTitle, DialogContent,
+  DialogActions, TextField
 } from '@mui/material';
-import { Edit, Download, ArrowBack, Business, Person, ContentCopy } from '@mui/icons-material';
+import { Edit, Download, ArrowBack, Business, Person, ContentCopy, Email, WhatsApp } from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { billAPI } from '../../api/index.jsx';
@@ -33,6 +34,10 @@ export default function BillDetailPage() {
   const [bill, setBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [downloading, setDownloading] = useState(false);
+  const [whatsapping, setWhatsapping] = useState(false);
+  const [emailDialog, setEmailDialog] = useState(false);
+  const [emailForm, setEmailForm] = useState({ recipientEmail: '', subject: '', message: '' });
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   useEffect(() => {
     billAPI.getById(id)
@@ -50,6 +55,40 @@ export default function BillDetailPage() {
       toast.error('PDF download failed');
     } finally {
       setDownloading(false);
+    }
+  };
+
+  const handleWhatsApp = async () => {
+    setWhatsapping(true);
+    try {
+      const res = await billAPI.getWhatsAppLink(id);
+      window.open(res.data.link, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not open WhatsApp');
+    } finally {
+      setWhatsapping(false);
+    }
+  };
+
+  const openEmailDialog = () => {
+    setEmailForm({ recipientEmail: bill.customerEmail || '', subject: '', message: '' });
+    setEmailDialog(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!emailForm.recipientEmail) {
+      toast.error('Please enter a recipient email');
+      return;
+    }
+    setSendingEmail(true);
+    try {
+      const res = await billAPI.sendEmail(id, emailForm);
+      toast.success(res.data?.message || 'Invoice emailed!');
+      setEmailDialog(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -86,6 +125,17 @@ export default function BillDetailPage() {
             onClick={handleDownload} disabled={downloading}>
             Download PDF
           </Button>
+          <Button variant="outlined" sx={{ color: '#25D366', borderColor: '#25D366' }}
+            startIcon={whatsapping ? <CircularProgress size={16} /> : <WhatsApp />}
+            onClick={handleWhatsApp} disabled={whatsapping || !bill.customerPhone}>
+            WhatsApp
+          </Button>
+          {isAdmin && (
+            <Button variant="outlined" color="primary" startIcon={<Email />}
+              onClick={openEmailDialog}>
+              Email
+            </Button>
+          )}
           {isAdmin && (
             <Button variant="outlined" color="secondary" startIcon={<ContentCopy />}
               onClick={() => navigate(`/bills/${id}/clone`)}>
@@ -211,6 +261,38 @@ export default function BillDetailPage() {
           </Grid>
         )}
       </Grid>
+
+      <Dialog open={emailDialog} onClose={() => !sendingEmail && setEmailDialog(false)} fullWidth maxWidth="sm">
+        <DialogTitle>Email invoice {bill.billNumber}</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            The invoice PDF will be attached automatically.
+          </Typography>
+          <TextField
+            fullWidth margin="dense" label="Recipient email" type="email" required
+            value={emailForm.recipientEmail}
+            onChange={(e) => setEmailForm({ ...emailForm, recipientEmail: e.target.value })}
+          />
+          <TextField
+            fullWidth margin="dense" label="Subject (optional)"
+            placeholder={`Invoice ${bill.billNumber}`}
+            value={emailForm.subject}
+            onChange={(e) => setEmailForm({ ...emailForm, subject: e.target.value })}
+          />
+          <TextField
+            fullWidth margin="dense" label="Message (optional)" multiline rows={3}
+            value={emailForm.message}
+            onChange={(e) => setEmailForm({ ...emailForm, message: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailDialog(false)} disabled={sendingEmail}>Cancel</Button>
+          <Button variant="contained" onClick={handleSendEmail} disabled={sendingEmail}
+            startIcon={sendingEmail ? <CircularProgress size={16} /> : <Email />}>
+            Send
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

@@ -106,6 +106,33 @@ public class Dtos {
         private LocalDateTime updatedAt;
     }
 
+    // ===== DELIVERY DTOs =====
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SendEmailRequest {
+        @Email private String recipientEmail;   // optional; falls back to the bill's customer email
+        private String subject;                  // optional; a sensible default is used
+        private String message;                  // optional; a sensible default is used
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MessageResponse {
+        private String message;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class WhatsAppLinkResponse {
+        private String link;   // ready-to-open wa.me URL
+        private String phone;  // normalized international number used in the link
+    }
+
     // ===== USER DTOs =====
     @Data
     @Builder
